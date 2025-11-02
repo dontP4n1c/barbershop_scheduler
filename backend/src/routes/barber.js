@@ -9,9 +9,8 @@ export default async function (app, opts) {
   })
 
   // admin: generate invite token for barber registration
-  app.post('/api/barbers/token', { preHandler: [app.authenticate] }, async (request, reply) => {
+  app.post('/api/barbers/token', { preHandler: [app.auth(['admin'])] }, async (request, reply) => {
     const requester = request.user
-    if (!requester || requester.role !== 'admin') return reply.status(403).send({ error: 'forbidden' })
 
     const { barber_id } = request.body || {}
     const token = randomBytes(16).toString('hex')
@@ -22,7 +21,7 @@ export default async function (app, opts) {
   })
 
   // set availability (barber only)
-  app.post('/api/barbers/:id/schedule', { preHandler: [app.authenticate] }, async (request, reply) => {
+  app.post('/api/barbers/:id/schedule', { preHandler: [app.auth(['barber','admin'])] }, async (request, reply) => {
     const requester = request.user
     const barberId = parseInt(request.params.id, 10)
     if (!requester) return reply.status(401).send({ error: 'unauthorized' })
@@ -56,7 +55,7 @@ export default async function (app, opts) {
   })
 
   // block slots (barber only)
-  app.post('/api/barbers/:id/schedule/block', { preHandler: [app.authenticate] }, async (request, reply) => {
+  app.post('/api/barbers/:id/schedule/block', { preHandler: [app.auth(['barber','admin'])] }, async (request, reply) => {
     const requester = request.user
     const barberId = parseInt(request.params.id, 10)
     if (!requester) return reply.status(401).send({ error: 'unauthorized' })

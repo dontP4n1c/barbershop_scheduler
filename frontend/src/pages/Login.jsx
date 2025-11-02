@@ -37,6 +37,7 @@ export default function Login() {
         {error && <div className="text-red-600 text-sm">{error}</div>}
         <div className="flex items-center justify-between">
           <button className="bg-blue-600 text-white px-4 py-2 rounded" disabled={loading}>{loading ? '...' : 'Entrar'}</button>
+          <a href="#register" className="text-sm text-blue-600">Criar conta</a>
         </div>
       </form>
     </div>

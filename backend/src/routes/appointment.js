@@ -2,7 +2,7 @@ import prisma from '../prisma.js'
 
 export default async function (app, opts) {
   // list appointments (for authenticated user)
-  app.get('/api/appointments', { preHandler: [app.authenticate] }, async (request, reply) => {
+  app.get('/api/appointments', { preHandler: [app.auth()] }, async (request, reply) => {
     const user = request.user
     if (!user) return reply.status(401).send({ error: 'unauthorized' })
 
@@ -16,7 +16,7 @@ export default async function (app, opts) {
   })
 
   // create appointment
-  app.post('/api/appointments', { preHandler: [app.authenticate] }, async (request, reply) => {
+  app.post('/api/appointments', { preHandler: [app.auth()] }, async (request, reply) => {
     const user = request.user
     if (!user) return reply.status(401).send({ error: 'unauthorized' })
 
@@ -50,7 +50,7 @@ export default async function (app, opts) {
   })
 
   // cancel appointment
-  app.delete('/api/appointments/:id', { preHandler: [app.authenticate] }, async (request, reply) => {
+  app.delete('/api/appointments/:id', { preHandler: [app.auth()] }, async (request, reply) => {
     const user = request.user
     const id = parseInt(request.params.id, 10)
     const appt = await prisma.appointment.findUnique({ where: { id } })

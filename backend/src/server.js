@@ -18,6 +18,7 @@ await app.register(fastifyJwt, {
 })
 
 // auth helper
+// simple authenticate for backward compatibility
 app.decorate('authenticate', async function (request, reply) {
   try {
     await request.jwtVerify()
@@ -26,19 +27,45 @@ app.decorate('authenticate', async function (request, reply) {
   }
 })
 
+// role-based auth middleware factory: app.auth(['admin','barber']) or app.auth() for any authenticated user
+app.decorate('auth', function (roles = []) {
+  return async function (request, reply) {
+    try {
+      await request.jwtVerify()
+    } catch (err) {
+      return reply.status(401).send({ error: 'not_authenticated' })
+    }
+    const userRole = request.user?.role
+    if (Array.isArray(roles) && roles.length > 0 && !roles.includes(userRole)) {
+      return reply.status(403).send({ error: 'forbidden' })
+    }
+  }
+})
+
 app.get('/api/health', async () => ({ status: 'ok' }))
 
 // Register
 app.post('/api/auth/register', async (request, reply) => {
-  const { name, email, phone, password, role } = request.body || {}
+  const { name, email, phone, password, role, invite_token } = request.body || {}
   if (!email || !password || !name) return reply.status(400).send({ error: 'missing_fields' })
 
   const existing = await prisma.user.findUnique({ where: { email } })
   if (existing) return reply.status(409).send({ error: 'user_exists' })
 
+  // handle barber invite token
+  let finalRole = role || 'client'
+  if (finalRole === 'barber') {
+    if (!invite_token) return reply.status(400).send({ error: 'invite_required' })
+    const tokenEntry = await prisma.token.findUnique({ where: { token: invite_token } })
+    if (!tokenEntry || tokenEntry.type !== 'barber_invite' || tokenEntry.used) return reply.status(403).send({ error: 'invalid_token' })
+    if (tokenEntry.expiresAt && tokenEntry.expiresAt < new Date()) return reply.status(403).send({ error: 'token_expired' })
+    // mark token used
+    await prisma.token.update({ where: { id: tokenEntry.id }, data: { used: true } })
+  }
+
   const hash = await bcrypt.hash(password, 10)
   const user = await prisma.user.create({
-    data: { name, email, phone: phone || null, password_hash: hash, role: role || 'client' },
+    data: { name, email, phone: phone || null, password_hash: hash, role: finalRole },
     select: { id: true, name: true, email: true, role: true },
   })
 
@@ -62,11 +89,20 @@ app.post('/api/auth/login', async (request, reply) => {
 })
 
 // Protected example
-app.get('/api/me', { preHandler: [app.authenticate] }, async (request) => {
+app.get('/api/me', { preHandler: [app.auth()] }, async (request) => {
   const userId = request.user?.id
   if (!userId) return { error: 'not_authenticated' }
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, name: true, email: true, role: true, phone: true } })
   return { user }
+})
+
+// update profile
+app.patch('/api/me', { preHandler: [app.auth()] }, async (request, reply) => {
+  const userId = request.user?.id
+  if (!userId) return reply.status(401).send({ error: 'not_authenticated' })
+  const { name, phone } = request.body || {}
+  const updated = await prisma.user.update({ where: { id: userId }, data: { name: name || undefined, phone: phone || undefined }, select: { id: true, name: true, email: true, role: true, phone: true } })
+  return { user: updated }
 })
 
 // register route modules

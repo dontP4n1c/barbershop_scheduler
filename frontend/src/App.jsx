@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import api from './api'
 import useAuth from './store'
 import Login from './pages/Login'
+import Register from './pages/Register'
 import BarberList from './components/BarberList'
 import MyAppointments from './components/MyAppointments'
 
@@ -21,7 +22,7 @@ export default function App() {
         </header>
 
         {!user ? (
-          <Login />
+          (window.location.hash === '#register') ? <Register /> : <Login />
         ) : (
           <div>
             <div className="flex justify-between items-center mb-4">
