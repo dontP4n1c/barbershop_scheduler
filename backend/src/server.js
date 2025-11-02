@@ -4,6 +4,8 @@ import dotenv from 'dotenv'
 import fastifyJwt from '@fastify/jwt'
 import bcrypt from 'bcryptjs'
 import prisma from './prisma.js'
+import barberRoutes from './routes/barber.js'
+import appointmentRoutes from './routes/appointment.js'
 
 dotenv.config()
 
@@ -66,6 +68,10 @@ app.get('/api/me', { preHandler: [app.authenticate] }, async (request) => {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, name: true, email: true, role: true, phone: true } })
   return { user }
 })
+
+// register route modules
+await app.register(barberRoutes)
+await app.register(appointmentRoutes)
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001
 const HOST = process.env.HOST || '0.0.0.0'
