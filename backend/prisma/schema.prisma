@@ -17,6 +17,8 @@ model User {
   createdAt     DateTime  @default(now())
   appointmentsAsClient Appointment[] @relation("ClientAppointments")
   appointmentsAsBarber Appointment[] @relation("BarberAppointments")
+  barberSchedules BarberSchedule[]
+  tokens          Token[]
 }
 
 model Appointment {
@@ -35,8 +37,8 @@ model BarberSchedule {
   barber          User    @relation(fields: [barber_id], references: [id])
   barber_id       Int
   date            DateTime
-  available_slots Json
-  blocked_slots   Json
+  available_slots String
+  blocked_slots   String
   createdAt       DateTime @default(now())
 }
 
