@@ -8,7 +8,9 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://api:3001',
+        // when running inside Docker Compose the API host is 'api:3001'
+        // when running locally use VITE_API_URL or localhost
+        target: process.env.VITE_API_URL || 'http://localhost:3001',
         changeOrigin: true,
         secure: false
       }

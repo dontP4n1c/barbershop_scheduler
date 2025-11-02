@@ -14,8 +14,18 @@ export default function Login() {
     setLoading(true)
     setError(null)
     try {
-      const res = await api.post('/api/auth/login', { email, password })
-      const { token, user } = res.data
+      let res
+      try {
+        res = await api.post('/api/auth/login', { email, password })
+      } catch (clientErr) {
+        const fallback = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+        if (fallback && (import.meta.env.VITE_API_URL === undefined || import.meta.env.VITE_API_URL === '')) {
+          res = await fetch(`${fallback}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) }).then(r => r.json())
+        } else {
+          throw clientErr
+        }
+      }
+      const { token, user } = res.data || res
       setAuth(token, user)
     } catch (err) {
       setError(err?.response?.data?.error || 'erro')

@@ -4,7 +4,7 @@ import prisma from '../prisma.js'
 export default async function (app, opts) {
   // list barbers
   app.get('/api/barbers', async (request, reply) => {
-    const barbers = await prisma.user.findMany({ where: { role: 'barber' }, select: { id: true, name: true, email: true, phone: true } })
+    const barbers = await prisma.user.findMany({ where: { role: 'barber' }, select: { id: true, name: true, email: true, phone: true, specialty: true, status: true } })
     return { barbers }
   })
 

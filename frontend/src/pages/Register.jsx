@@ -19,11 +19,29 @@ export default function Register() {
     try {
       const body = { name, email, phone, password, role }
       if (role === 'barber') body.invite_token = inviteToken
-      const res = await api.post('/api/auth/register', body)
-      const { token, user } = res.data
+
+      // try using configured API client
+      let res
+      try {
+        res = await api.post('/api/auth/register', body)
+      } catch (clientErr) {
+        // fallback: if VITE_API_URL not set, try localhost direct (useful for local dev without vite proxy)
+        const fallback = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+        if (fallback && (import.meta.env.VITE_API_URL === undefined || import.meta.env.VITE_API_URL === '')) {
+          res = await fetch(`${fallback}/api/auth/register`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+          }).then(r => r.json())
+        } else {
+          throw clientErr
+        }
+      }
+
+      const { token, user } = res.data || res
       setAuth(token, user)
     } catch (err) {
-      setError(err?.response?.data?.error || 'erro')
+      // normalize error message
+      const msg = err?.response?.data?.error || err?.error || err?.message || (err && typeof err === 'string' ? err : null)
+      setError(msg || 'erro')
     } finally { setLoading(false) }
   }
 

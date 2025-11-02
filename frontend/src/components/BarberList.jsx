@@ -15,10 +15,15 @@ export default function BarberList() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {barbers.map(b => (
           <div key={b.id} className="bg-white p-4 rounded shadow">
-            <div className="font-semibold">{b.name}</div>
-            <div className="text-sm text-gray-600">{b.email}</div>
-            <div className="mt-2">
-              <button className="text-sm text-blue-600" onClick={() => setSelected(b)}>Agendar</button>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-semibold">{b.name} {b.status !== 'active' && <span className="text-xs text-gray-500">({b.status})</span>}</div>
+                <div className="text-sm text-gray-600">{b.specialty || 'Geral'}</div>
+                <div className="text-sm text-gray-600">{b.email}</div>
+              </div>
+              <div>
+                <button className="text-sm text-blue-600" onClick={() => setSelected(b)}>Agendar</button>
+              </div>
             </div>
           </div>
         ))}
